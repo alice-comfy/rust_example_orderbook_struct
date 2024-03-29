@@ -5,4 +5,5 @@ authors = ["Shinoji Research Holdings <contact@shinoji-research.com>"]
 edition = '2021'
 
 [dependencies]
+chrono = "0.4.37"
 pyo3 = "0.21.0"

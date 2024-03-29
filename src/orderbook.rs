@@ -3,11 +3,16 @@
 
 use std::{cmp::Eq, collections::{btree_map, BTreeMap}};
 use chrono::{DateTime, Utc, TimeZone};
+use crate::models::Decimal64;
+use pyo3::{prelude::*, types::PyList};
 //the basic idea here is that we convert the price / size to and integer and retain a multiplier to convert it back. The reasoning is to avoid the imprecision of floating point math. 
+#[pyclass]
+#[derive(Debug, Clone)]
 pub enum Side {
     Buy,
     Sell,
 }
+#[pyclass]
 #[derive(Debug, Clone)]
 pub struct OrderBook {
     symbol: String,
@@ -18,6 +23,7 @@ pub struct OrderBook {
     
     
 }
+#[pyclass]
 #[derive(Debug, Clone, )]
 pub struct OrderBookEntry {
     pricePrecision: u8, 
@@ -41,27 +47,13 @@ impl OrderBookEntry {
     
 
 }
-impl OrderBookEntry {
-    pub fn from_string(price : String, size: String, pricePrecision: u8, sizePrecision : u8, side: Side) -> Self {
-        let tmpprice :f64 = price.parse().unwrap();
-        let tmpsize : f64 = size.parse().unwrap();
-        let expbase : i64 = 10;
-        let finprice : i64 = (tmpprice* ((expbase.pow(pricePrecision as u32))as f64)) as i64;
-        let finsize : i64 = (tmpsize*((expbase.pow(sizePrecision as u32)) as f64)) as i64;
-        OrderBookEntry { pricePrecision: pricePrecision, sizePrecision: sizePrecision,  side: side, size: finsize, price: finprice }
-    }
-    pub fn to_map(self) -> (i64, i64) {
-        (self.price, self.size)
-    }
-    
-
-}
 impl PartialEq for OrderBookEntry {
     //NOTE: USING PARITALEQ IN AN OTHERWISE INCORRECT MANNER TO MAKE THIS DATA STRUCTURE WORK. INTENDED BEHAVIOR IS FOR OBES OF DIFFERENT SIZES AND THE SAME PRICE TO MATCH.
     fn eq(&self, other: &Self) -> bool {
         self.price == other.price
     }
 }
+#[pymethods]
 impl OrderBook {
     pub fn update_record(&mut self, new: OrderBookEntry) {
         let side = new.side.clone();
@@ -88,6 +80,7 @@ impl OrderBook {
         }
 
     }
+    #[new]
     pub fn new(symbol: String, pricePrecision: u8, sizePrecision: u8) -> Self {
         OrderBook { symbol: symbol, pricePrecision: pricePrecision, sizePrecision: sizePrecision, bids: BTreeMap::new(), asks: BTreeMap::new() }
 
@@ -102,6 +95,23 @@ impl OrderBook {
     }
     pub fn get_symbol(&self) -> &str {
         &self.symbol
+    }
+    pub fn handle_new_bids_asks(&mut self, bids : Vec<(String,String)>, asks: Vec<(String,String)>) {
+        let bidvec: Vec<OrderBookEntry> = bids.iter().map(|b| {
+
+            OrderBookEntry::from_string(b.clone().0, b.clone().1, self.pricePrecision, self.sizePrecision, Side::Buy)
+            }).collect();
+        let askvec: Vec<OrderBookEntry> = asks.iter().map(|a| {
+
+            OrderBookEntry::from_string(a.clone().0, a.clone().1, self.pricePrecision, self.sizePrecision, Side::Buy)
+            }).collect();
+        for i in bidvec {
+            self.update_record(i);
+        }
+        for i in askvec {
+            self.update_record(i);
+        }
+
     }
     pub fn get_slippage(&self, sz: String) -> String {
         let size = self.handle_string_size(sz);
