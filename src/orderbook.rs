@@ -4,6 +4,10 @@
 use std::{cmp::Eq, collections::{btree_map, BTreeMap}};
 use chrono::{DateTime, Utc, TimeZone};
 //the basic idea here is that we convert the price / size to and integer and retain a multiplier to convert it back. The reasoning is to avoid the imprecision of floating point math. 
+pub enum Side {
+    Buy,
+    Sell,
+}
 #[derive(Debug, Clone)]
 pub struct OrderBook {
     symbol: String,
