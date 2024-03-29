@@ -1,0 +1,8 @@
+[package]
+name = "Orderbook_Struct"
+version = "0.1.0"
+authors = ["Shinoji Research Holdings <contact@shinoji-research.com>"]
+edition = '2021'
+
+[dependencies]
+pyo3 = "0.21.0"

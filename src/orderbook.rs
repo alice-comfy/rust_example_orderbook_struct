@@ -1,5 +1,5 @@
 //This code is intended for education / example purposes only. 
-//(C) shinoji research 2023
+//(C) shinoji research 2023-2024
 
 use std::{cmp::Eq, collections::{btree_map, BTreeMap}};
 use chrono::{DateTime, Utc, TimeZone};
@@ -13,6 +13,50 @@ pub struct OrderBook {
     asks: BTreeMap<i64, i64>
     
     
+}
+#[derive(Debug, Clone, )]
+pub struct OrderBookEntry {
+    pricePrecision: u8, 
+    sizePrecision: u8,
+    pub side: Side,
+    size: i64,
+    price: i64,
+}
+impl OrderBookEntry {
+    pub fn from_string(price : String, size: String, pricePrecision: u8, sizePrecision : u8, side: Side) -> Self {
+        let tmpprice :f64 = price.parse().unwrap();
+        let tmpsize : f64 = size.parse().unwrap();
+        let expbase : i64 = 10;
+        let finprice : i64 = (tmpprice* ((expbase.pow(pricePrecision as u32))as f64)) as i64;
+        let finsize : i64 = (tmpsize*((expbase.pow(sizePrecision as u32)) as f64)) as i64;
+        OrderBookEntry { pricePrecision: pricePrecision, sizePrecision: sizePrecision,  side: side, size: finsize, price: finprice }
+    }
+    pub fn to_map(self) -> (i64, i64) {
+        (self.price, self.size)
+    }
+    
+
+}
+impl OrderBookEntry {
+    pub fn from_string(price : String, size: String, pricePrecision: u8, sizePrecision : u8, side: Side) -> Self {
+        let tmpprice :f64 = price.parse().unwrap();
+        let tmpsize : f64 = size.parse().unwrap();
+        let expbase : i64 = 10;
+        let finprice : i64 = (tmpprice* ((expbase.pow(pricePrecision as u32))as f64)) as i64;
+        let finsize : i64 = (tmpsize*((expbase.pow(sizePrecision as u32)) as f64)) as i64;
+        OrderBookEntry { pricePrecision: pricePrecision, sizePrecision: sizePrecision,  side: side, size: finsize, price: finprice }
+    }
+    pub fn to_map(self) -> (i64, i64) {
+        (self.price, self.size)
+    }
+    
+
+}
+impl PartialEq for OrderBookEntry {
+    //NOTE: USING PARITALEQ IN AN OTHERWISE INCORRECT MANNER TO MAKE THIS DATA STRUCTURE WORK. INTENDED BEHAVIOR IS FOR OBES OF DIFFERENT SIZES AND THE SAME PRICE TO MATCH.
+    fn eq(&self, other: &Self) -> bool {
+        self.price == other.price
+    }
 }
 impl OrderBook {
     pub fn update_record(&mut self, new: OrderBookEntry) {
@@ -54,10 +98,6 @@ impl OrderBook {
     }
     pub fn get_symbol(&self) -> &str {
         &self.symbol
-    }
-    pub fn check_order_profitabilty(&self, price: String, size: String, side: Side) {
-
-
     }
     pub fn get_slippage(&self, sz: String) -> String {
         let size = self.handle_string_size(sz);
